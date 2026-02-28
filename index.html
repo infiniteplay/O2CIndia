@@ -1,680 +1,340 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FiniFi - Customer PO Insights</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #f8fafc;
-            color: #1e293b;
-        }
-        
-        .header {
-            background: white;
-            padding: 1rem 2rem;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #3b82f6;
-        }
-        
-        .dashboard-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-left: 2rem;
-        }
-        
-        .date-filter {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-        
-        .filter-btn {
-            padding: 0.5rem 1rem;
-            border: 1px solid #d1d5db;
-            background: white;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.875rem;
-        }
-        
-        .filter-btn.active {
-            background: #3b82f6;
-            color: white;
-            border-color: #3b82f6;
-        }
-        
-        .container {
-            padding: 2rem;
-            max-width: 1600px;
-            margin: 0 auto;
-        }
-        
-        .analytics-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-        
-        .full-width {
-            grid-column: 1 / -1;
-        }
-        
-        .chart-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        
-        .chart-title {
-            font-size: 1.125rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: #1e293b;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .chart-subtitle {
-            font-size: 0.875rem;
-            color: #64748b;
-            margin-bottom: 1rem;
-        }
-        
-        .table-container {
-            overflow-x: auto;
-        }
-        
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.875rem;
-        }
-        
-        .data-table th {
-            background: #f8fafc;
-            padding: 0.75rem;
-            text-align: left;
-            font-weight: 600;
-            color: #374151;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        
-        .data-table td {
-            padding: 0.75rem;
-            border-bottom: 1px solid #f1f5f9;
-        }
-        
-        .data-table tr:hover {
-            background: #f8fafc;
-        }
-        
-        .trend-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            font-size: 0.75rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-        }
-        
-        .trend-up {
-            background: #dcfce7;
-            color: #16a34a;
-        }
-        
-        .trend-down {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-        
-        .trend-stable {
-            background: #f1f5f9;
-            color: #64748b;
-        }
-        
-        .sku-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid #f1f5f9;
-        }
-        
-        .sku-item:last-child {
-            border-bottom: none;
-        }
-        
-        .sku-info {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-        
-        .sku-name {
-            font-weight: 500;
-            color: #1e293b;
-        }
-        
-        .sku-brand {
-            font-size: 0.75rem;
-            color: #64748b;
-        }
-        
-        .sku-stats {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 0.25rem;
-        }
-        
-        .sku-quantity {
-            font-weight: 600;
-            color: #1e293b;
-        }
-        
-        .sku-value {
-            font-size: 0.75rem;
-            color: #64748b;
-        }
-        
-        .warning-banner {
-            background: #fef3c7;
-            border: 1px solid #f59e0b;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 2rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        
-        .warning-icon {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #f59e0b;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.75rem;
-        }
-        
-        @media (max-width: 1200px) {
-            .analytics-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
-            }
-            
-            .header {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            
-            .date-filter {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>o2cindia.com — Order-to-Cash in India</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #0f0f0f;
+      --paper: #f7f5f0;
+      --rule: #d4cfc5;
+      --muted: #6b665c;
+      --accent: #b5460e;
+      --col: 720px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { font-size: 17px; scroll-behavior: smooth; }
+
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-weight: 300;
+      line-height: 1.75;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Header ── */
+    header {
+      border-bottom: 1px solid var(--rule);
+      padding: 3.5rem 2rem 2.5rem;
+      max-width: var(--col);
+      margin: 0 auto;
+    }
+
+    .site-tag {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1.4rem;
+    }
+
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-weight: 900;
+      font-size: clamp(2rem, 5vw, 3rem);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      max-width: 18ch;
+    }
+
+    h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    /* ── Main ── */
+    main {
+      max-width: var(--col);
+      margin: 0 auto;
+      padding: 0 2rem 6rem;
+    }
+
+    /* ── Intro ── */
+    .intro {
+      padding: 2.8rem 0 2.8rem;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .intro p {
+      font-size: 1.1rem;
+      color: var(--ink);
+      max-width: 58ch;
+    }
+
+    .intro p + p { margin-top: 1rem; }
+
+    /* ── Sections ── */
+    section {
+      padding: 3rem 0;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    h2 {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: 1.45rem;
+      letter-spacing: -0.01em;
+      margin-bottom: 1.6rem;
+      line-height: 1.25;
+    }
+
+    p { max-width: 62ch; }
+    p + p { margin-top: 1rem; }
+
+    /* ── Observations list ── */
+    .obs-list {
+      list-style: none;
+      margin-top: 1.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .obs-list li {
+      display: grid;
+      grid-template-columns: 1fr;
+      padding: 1.4rem 0;
+      border-top: 1px solid var(--rule);
+    }
+
+    .obs-list li:last-child { border-bottom: 1px solid var(--rule); }
+
+    .obs-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.4rem;
+    }
+
+    .obs-text {
+      font-size: 0.97rem;
+      color: var(--ink);
+      max-width: 60ch;
+    }
+
+    /* ── Architecture pillars ── */
+    .pillars {
+      list-style: none;
+      margin-top: 1.8rem;
+      counter-reset: pillar;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .pillars li {
+      counter-increment: pillar;
+      display: grid;
+      grid-template-columns: 2.2rem 1fr;
+      gap: 0 1.2rem;
+      padding: 1.4rem 0;
+      border-top: 1px solid var(--rule);
+      align-items: start;
+    }
+
+    .pillars li:last-child { border-bottom: 1px solid var(--rule); }
+
+    .pillars li::before {
+      content: counter(pillar, decimal-leading-zero);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+      padding-top: 0.2rem;
+    }
+
+    .pillar-title {
+      font-weight: 500;
+      font-size: 0.97rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .pillar-body {
+      font-size: 0.93rem;
+      color: var(--muted);
+      max-width: 58ch;
+    }
+
+    /* ── Footer / Finifi ── */
+    .finifi-section {
+      padding: 3rem 0 0;
+    }
+
+    .finifi-tag {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .finifi-section h2 {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    footer {
+      border-top: 1px solid var(--rule);
+      max-width: var(--col);
+      margin: 4rem auto 0;
+      padding: 2rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .footer-domain {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+    }
+
+    .footer-credit {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    .footer-credit a {
+      color: var(--ink);
+      text-decoration: none;
+      border-bottom: 1px solid var(--rule);
+      transition: border-color 0.15s;
+    }
+
+    .footer-credit a:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    header, .intro, section, .finifi-section {
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .intro          { animation-delay: 0.08s; }
+    section:nth-of-type(1) { animation-delay: 0.14s; }
+    section:nth-of-type(2) { animation-delay: 0.2s; }
+    .finifi-section { animation-delay: 0.26s; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      header, main { padding-left: 1.2rem; padding-right: 1.2rem; }
+      footer { padding-left: 1.2rem; padding-right: 1.2rem; }
+    }
+  </style>
 </head>
 <body>
-    <div class="header">
-        <div style="display: flex; align-items: center;">
-            <div class="logo">
-                <img src="Finifi Logo.png" alt="FiniFi Logo" style="height: 25px;">
-            </div>
-            <div class="dashboard-title">Customer PO Insights</div>
-        </div>
-        <div class="date-filter">
-            <button class="filter-btn">Today</button>
-            <button class="filter-btn">7 Days</button>
-            <button class="filter-btn active">30 Days</button>
-            <button class="filter-btn">90 Days</button>
-        </div>
+
+  <header>
+    <p class="site-tag">o2cindia.com &mdash; A Documentation Project</p>
+    <h1>Order-to-Cash in <em>India</em>:<br>An Operational Reference</h1>
+  </header>
+
+  <main>
+
+    <div class="intro">
+      <p>o2cindia.com is a documentation project by the team at Finifi. Our goal is to map the technical and operational realities of Order-to-Cash (O2C) within the Indian enterprise ecosystem.</p>
+      <p>We focus on the &ldquo;last mile&rdquo; of finance: the gap where ERP data meets bank statements, marketplace reports, and physical distribution reality.</p>
     </div>
-    
-    <div class="container">
-        <div class="warning-banner">
-            <div class="warning-icon">!</div>
-            <div>
-                <strong>Attention Required:</strong> 23 POs expiring this week, 34 price mismatches detected, and 58 unmapped items need immediate action.
-            </div>
-        </div>
-        
-        <div class="analytics-grid">
-            
-            <!-- Top Customers -->
-            <div class="chart-card">
-                <div class="chart-title">Top Customers by PO Volume</div>
-                <div class="table-container">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Customer</th>
-                                <th>POs</th>
-                                <th>Amount</th>
-                                <th>Delivery Rate</th>
-                                <th>Trend</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>BigBasket Warehouse</td>
-                                <td>156</td>
-                                <td>₹45.2L</td>
-                                <td>94%</td>
-                                <td><span class="trend-indicator trend-up">↗ +12%</span></td>
-                            </tr>
-                            <tr>
-                                <td>Cash N Carry - Jalandhar</td>
-                                <td>89</td>
-                                <td>₹32.1L</td>
-                                <td>91%</td>
-                                <td><span class="trend-indicator trend-up">↗ +8%</span></td>
-                            </tr>
-                            <tr>
-                                <td>Warehouse No 1. Sahib</td>
-                                <td>67</td>
-                                <td>₹28.7L</td>
-                                <td>88%</td>
-                                <td><span class="trend-indicator trend-stable">→ 0%</span></td>
-                            </tr>
-                            <tr>
-                                <td>SND Warehousing Complex</td>
-                                <td>54</td>
-                                <td>₹19.8L</td>
-                                <td>85%</td>
-                                <td><span class="trend-indicator trend-down">↘ -5%</span></td>
-                            </tr>
-                            <tr>
-                                <td>SCOOTSY LOGISTICS</td>
-                                <td>43</td>
-                                <td>₹16.4L</td>
-                                <td>92%</td>
-                                <td><span class="trend-indicator trend-up">↗ +15%</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <!-- Top Undelivered SKUs -->
-            <div class="chart-card">
-                <div class="chart-title">Top Undelivered SKUs</div>
-                <div class="chart-subtitle">Items requiring attention</div>
-                <div>
-                    <div class="sku-item">
-                        <div class="sku-info">
-                            <div class="sku-name">Fortune Soyabean Oil 1L</div>
-                            <div class="sku-brand">Adani Wilmar • FMCG</div>
-                        </div>
-                        <div class="sku-stats">
-                            <div class="sku-quantity">234 units</div>
-                            <div class="sku-value">₹2.8L pending</div>
-                        </div>
-                    </div>
-                    <div class="sku-item">
-                        <div class="sku-info">
-                            <div class="sku-name">Maggi Noodles 2-Min 70g</div>
-                            <div class="sku-brand">Nestle • FMCG</div>
-                        </div>
-                        <div class="sku-stats">
-                            <div class="sku-quantity">189 units</div>
-                            <div class="sku-value">₹1.9L pending</div>
-                        </div>
-                    </div>
-                    <div class="sku-item">
-                        <div class="sku-info">
-                            <div class="sku-name">Britannia Good Day Cookies</div>
-                            <div class="sku-brand">Britannia • FMCG</div>
-                        </div>
-                        <div class="sku-stats">
-                            <div class="sku-quantity">156 units</div>
-                            <div class="sku-value">₹1.2L pending</div>
-                        </div>
-                    </div>
-                    <div class="sku-item">
-                        <div class="sku-info">
-                            <div class="sku-name">Tata Salt 1kg</div>
-                            <div class="sku-brand">Tata Consumer • FMCG</div>
-                        </div>
-                        <div class="sku-stats">
-                            <div class="sku-quantity">143 units</div>
-                            <div class="sku-value">₹0.8L pending</div>
-                        </div>
-                    </div>
-                    <div class="sku-item">
-                        <div class="sku-info">
-                            <div class="sku-name">Amul Butter 100g</div>
-                            <div class="sku-brand">Amul • Dairy</div>
-                        </div>
-                        <div class="sku-stats">
-                            <div class="sku-quantity">128 units</div>
-                            <div class="sku-value">₹0.9L pending</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Top Delivered SKUs -->
-            <div class="chart-card">
-                <div class="chart-title">Top Delivered SKUs</div>
-                <div class="chart-subtitle">Best performing items</div>
-                <div>
-                    <div class="sku-item">
-                        <div class="sku-info">
-                            <div class="sku-name">Surf Excel Liquid 1L</div>
-                            <div class="sku-brand">Hindustan Unilever • FMCG</div>
-                        </div>
-                        <div class="sku-stats">
-                            <div class="sku-quantity">567 units</div>
-                            <div class="sku-value">₹8.2L delivered</div>
-                        </div>
-                    </div>
-                    <div class="sku-item">
-                        <div class="sku-info">
-                            <div class="sku-name">Coca Cola 250ml Can</div>
-                            <div class="sku-brand">Coca Cola • Beverages</div>
-                        </div>
-                        <div class="sku-stats">
-                            <div class="sku-quantity">489 units</div>
-                            <div class="sku-value">₹4.9L delivered</div>
-                        </div>
-                    </div>
-                    <div class="sku-item">
-                        <div class="sku-info">
-                            <div class="sku-name">Parle G Biscuits 100g</div>
-                            <div class="sku-brand">Parle • FMCG</div>
-                        </div>
-                        <div class="sku-stats">
-                            <div class="sku-quantity">423 units</div>
-                            <div class="sku-value">₹2.1L delivered</div>
-                        </div>
-                    </div>
-                    <div class="sku-item">
-                        <div class="sku-info">
-                            <div class="sku-name">Colgate Toothpaste 200g</div>
-                            <div class="sku-brand">Colgate • Personal Care</div>
-                        </div>
-                        <div class="sku-stats">
-                            <div class="sku-quantity">398 units</div>
-                            <div class="sku-value">₹3.8L delivered</div>
-                        </div>
-                    </div>
-                    <div class="sku-item">
-                        <div class="sku-info">
-                            <div class="sku-name">Lux Soap 125g</div>
-                            <div class="sku-brand">Hindustan Unilever • Personal Care</div>
-                        </div>
-                        <div class="sku-stats">
-                            <div class="sku-quantity">345 units</div>
-                            <div class="sku-value">₹1.7L delivered</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            
-            <!-- Unmapped Items Analysis -->
-            <div class="chart-card">
-                <div class="chart-title">Unmapped Items Breakdown</div>
-                <div class="table-container">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Category</th>
-                                <th>Count</th>
-                                <th>Impact</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Item Master</td>
-                                <td>34</td>
-                                <td>₹8.9L</td>
-                                <td><button style="background: #3b82f6; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem;">Map Items</button></td>
-                            </tr>
-                            <tr>
-                                <td>Customer Master</td>
-                                <td>15</td>
-                                <td>₹4.2L</td>
-                                <td><button style="background: #f59e0b; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem;">Add Customer</button></td>
-                            </tr>
-                            <tr>
-                                <td>Warehouse Master</td>
-                                <td>9</td>
-                                <td>₹2.1L</td>
-                                <td><button style="background: #10b981; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem;">Add Location</button></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-        </div>
+
+    <section>
+      <h2>The Structural Challenges of O2C in India</h2>
+      <p>In high-volume Indian enterprises, the O2C cycle often breaks because systems aren&rsquo;t built to talk to one another. Revenue doesn&rsquo;t stall due to lack of sales; it stalls because the data required to settle those sales is fragmented.</p>
+      <p>Our observations on why O2C breaks:</p>
+
+      <ul class="obs-list">
+        <li>
+          <span class="obs-label">The Channel Information Gap</span>
+          <span class="obs-text">Sales data from Modern Trade (MT), General Trade (GT), and E-commerce (Quick Commerce/Marketplaces) arrive in non-standard formats that ERPs cannot natively ingest.</span>
+        </li>
+        <li>
+          <span class="obs-label">The Reconciliation Trap</span>
+          <span class="obs-text">Banks provide credits, but often without the UTR or reference details needed to clear an open invoice.</span>
+        </li>
+        <li>
+          <span class="obs-label">The Deduction Maze</span>
+          <span class="obs-text">Tax (TDS), schemes, and logistical credit notes create a &ldquo;noisy&rdquo; ledger where the cash received rarely matches the invoice value.</span>
+        </li>
+        <li>
+          <span class="obs-label">ERP Rigidity</span>
+          <span class="obs-text">Traditional ERPs are excellent for recording history but often lack the flexibility to handle the real-time, high-frequency matching required for modern Indian commerce.</span>
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>The Architecture of &ldquo;System-Led&rdquo; O2C</h2>
+      <p>We believe that &ldquo;good&rdquo; finance operations are system-led, not person-led. Based on our work at Finifi, we&rsquo;ve identified the architectural pillars of a mature O2C function:</p>
+
+      <ol class="pillars">
+        <li>
+          <div>
+            <div class="pillar-title">Automated Ingestion</div>
+            <div class="pillar-body">Directly fetching settlement reports from marketplaces and MT portals via APIs or automated scrapers.</div>
+          </div>
+        </li>
+        <li>
+          <div>
+            <div class="pillar-title">Algorithmic Matching</div>
+            <div class="pillar-body">Moving beyond manual Excel lookups to use fuzzy logic and UTR-matching algorithms that pair bank credits to invoices in real-time.</div>
+          </div>
+        </li>
+        <li>
+          <div>
+            <div class="pillar-title">Exception-Only Workflows</div>
+            <div class="pillar-body">Designing systems where finance teams only intervene when a dispute or short-payment occurs, rather than touching every transaction.</div>
+          </div>
+        </li>
+        <li>
+          <div>
+            <div class="pillar-title">ERP Synchronization</div>
+            <div class="pillar-body">Ensuring that once a match is found, the sub-ledger is updated automatically without manual data entry.</div>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <div class="finifi-section">
+      <p class="finifi-tag">Maintained by</p>
+      <h2>Finifi</h2>
+      <p>Finifi is an operations AI platform purpose-built for the Indian market. We provide the infrastructure for enterprises to run Procurement (P2P), Order-to-Cash (O2C), and Cash Application in a unified, system-led environment.</p>
+      <p style="margin-top:1rem;">We&rsquo;ve spent thousands of hours inside the finance departments of India&rsquo;s leading consumer brands, building the connectors that allow money and data to flow at the same speed. This site is our way of documenting what we&rsquo;ve learned.</p>
     </div>
-    
-    <script>
-        // TAT Distribution Chart
-        const tatCtx = document.getElementById('tatChart').getContext('2d');
-        new Chart(tatCtx, {
-            type: 'bar',
-            data: {
-                labels: ['< 1 Day', '1-2 Days', '2-3 Days', '3-5 Days', '> 5 Days'],
-                datasets: [{
-                    label: 'Number of POs',
-                    data: [89, 342, 456, 267, 93],
-                    backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#7c3aed'],
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Number of POs'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Turnaround Time'
-                        }
-                    }
-                }
-            }
-        });
-        
-        // Processing Efficiency Chart
-        const efficiencyCtx = document.getElementById('efficiencyChart').getContext('2d');
-        const last7Days = [];
-        const receivedData = [];
-        const fulfilledData = [];
-        
-        for (let i = 6; i >= 0; i--) {
-            const date = new Date();
-            date.setDate(date.getDate() - i);
-            last7Days.push(date.toLocaleDateString('en-IN', { weekday: 'short' }));
-            const received = Math.floor(Math.random() * 20) + 35;
-            receivedData.push(received);
-            fulfilledData.push(Math.floor(received * (0.75 + Math.random() * 0.2)));
-        }
-        
-        new Chart(efficiencyCtx, {
-            type: 'line',
-            data: {
-                labels: last7Days,
-                datasets: [{
-                    label: 'POs Received',
-                    data: receivedData,
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }, {
-                    label: 'POs Fulfilled',
-                    data: fulfilledData,
-                    borderColor: '#10b981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Count'
-                        }
-                    }
-                }
-            }
-        });
-        
-        // Brand Performance Chart
-        const brandCtx = document.getElementById('brandChart').getContext('2d');
-        new Chart(brandCtx, {
-            type: 'line',
-            data: {
-                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-                datasets: [{
-                    label: 'Hindustan Unilever',
-                    data: [234, 245, 267, 289],
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    tension: 0.4
-                }, {
-                    label: 'Nestle',
-                    data: [156, 167, 145, 178],
-                    borderColor: '#10b981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    tension: 0.4
-                }, {
-                    label: 'Britannia',
-                    data: [89, 98, 112, 134],
-                    borderColor: '#f59e0b',
-                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                    tension: 0.4
-                }, {
-                    label: 'Tata Consumer',
-                    data: [67, 78, 89, 95],
-                    borderColor: '#ef4444',
-                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                    tension: 0.4
-                }, {
-                    label: 'Coca Cola',
-                    data: [123, 134, 128, 142],
-                    borderColor: '#7c3aed',
-                    backgroundColor: 'rgba(124, 58, 237, 0.1)',
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Units Delivered'
-                        }
-                    }
-                }
-            }
-        });
-        
-        // Mismatch Chart
-        const mismatchCtx = document.getElementById('mismatchChart').getContext('2d');
-        new Chart(mismatchCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Price Mismatch', 'Tax Mismatch', 'Margin Mismatch'],
-                datasets: [{
-                    data: [34, 18, 12],
-                    backgroundColor: ['#ef4444', '#f59e0b', '#ec4899'],
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 20,
-                            usePointStyle: true
-                        }
-                    }
-                }
-            }
-        });
-        
-        // Filter button functionality
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                // Here you would typically reload data based on the selected period
-            });
-        });
-    </script>
+
+  </main>
+
+  <footer>
+    <span class="footer-domain">o2cindia.com</span>
+    <span class="footer-credit">A project by <a href="https://finifi.in" target="_blank" rel="noopener">Finifi</a></span>
+  </footer>
+
 </body>
 </html>
-                
